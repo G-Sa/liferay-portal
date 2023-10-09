@@ -9,9 +9,11 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.exception.ModelListenerException;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.ModelListener;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 import com.liferay.portal.security.audit.event.generators.util.Attribute;
 import com.liferay.portal.security.audit.event.generators.util.AttributesBuilder;
@@ -28,6 +30,27 @@ import org.osgi.service.component.annotations.Reference;
 @Component(service = ModelListener.class)
 public class ObjectDefinitionModelListener
 	extends BaseModelListener<ObjectDefinition> {
+
+	@Override
+	public void onAfterUpdate(ObjectDefinition originalObjectDefinition,
+							  ObjectDefinition objectDefinition)
+		throws ModelListenerException {
+		try {
+			_resourceLocalService.deleteResource(
+				objectDefinition.getCompanyId(),
+				ObjectDefinition.class.getName(), 4,
+				originalObjectDefinition.getExternalReferenceCode());
+
+			_resourceLocalService.addResources(
+				objectDefinition.getCompanyId(), 0,
+				objectDefinition.getUserId(),
+				ObjectDefinition.class.getName(),
+				objectDefinition.getExternalReferenceCode(), false, true, true);
+		}
+		catch (Exception exception) {
+			throw new ModelListenerException(exception);
+		}
+	}
 
 	@Override
 	public void onBeforeCreate(ObjectDefinition objectDefinition)
@@ -113,5 +136,8 @@ public class ObjectDefinitionModelListener
 
 	@Reference
 	private AuditRouter _auditRouter;
+
+	@Reference
+	private ResourceLocalService _resourceLocalService;
 
 }

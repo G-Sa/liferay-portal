@@ -235,7 +235,7 @@ public class ObjectDefinitionLocalServiceImpl
 		_resourceLocalService.addResources(
 			objectDefinition.getCompanyId(), 0, objectDefinition.getUserId(),
 			ObjectDefinition.class.getName(),
-			objectDefinition.getObjectDefinitionId(), false, true, true);
+			objectDefinition.getExternalReferenceCode(), false, true, true);
 
 		_addSystemObjectFields(
 			ObjectEntryTable.INSTANCE.getTableName(), objectDefinition,
@@ -1375,7 +1375,7 @@ public class ObjectDefinitionLocalServiceImpl
 		_resourceLocalService.addResources(
 			objectDefinition.getCompanyId(), 0, objectDefinition.getUserId(),
 			ObjectDefinition.class.getName(),
-			objectDefinition.getObjectDefinitionId(), false, true, true);
+			objectDefinition.getExternalReferenceCode(), false, true, true);
 
 		if (objectDefinition.isModifiable() ||
 			!objectDefinition.isUnmodifiableSystemObject()) {
