@@ -8,6 +8,7 @@ import {expect, mergeTests} from '@playwright/test';
 import {collectionsPagesTest} from '../../fixtures/CollectionsPageTest';
 import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
 import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
+import {isolatedInstanceTest} from '../../fixtures/isolatedInstanceTest';
 import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../fixtures/loginTest';
 import {objectPagesTest} from '../../fixtures/objectPagesTest';
@@ -23,6 +24,7 @@ import {mockObjectFields} from './utils/mockObjectFields';
 export const test = mergeTests(
 	apiHelpersTest,
 	collectionsPagesTest,
+	isolatedInstanceTest,
 	isolatedSiteTest,
 	featureFlagsTest({
 		'LPS-178052': true,
@@ -532,11 +534,14 @@ test.describe('Manage object entries through View Object Entries', () => {
 test.describe('Manage bound object entries with update root permission', () => {
 	test('can add bound object entries with update root permission', async ({
 		apiHelpers,
+		instance,
 		page,
 		viewObjectEntriesPage,
 	}) => {
 
-		// test.setTimeout(180000);
+		await page.goto(`http://${instance.virtualHost}:8080`, {waitUntil:"load"});
+
+		await performLogin(page, 'test', false);
 
 		const rootObjectDefinitionERC =
 			'rootObjectDefinitionERC' + getRandomInt();
@@ -656,9 +661,7 @@ test.describe('Manage bound object entries with update root permission', () => {
 			applicationName
 		);
 
-		const companyId = await page.evaluate(() => {
-			return Liferay.ThemeDisplay.getCompanyId();
-		});
+		const companyId = instance.companyId;
 
 		const role = await apiHelpers.headlessAdminUser.postRole({
 			name: 'Bound Updater ' + getRandomString(),
@@ -682,17 +685,18 @@ test.describe('Manage bound object entries with update root permission', () => {
 			],
 		});
 
+		const userAlternateName = 'demo.unprivileged';
+
 		const user =
-			await apiHelpers.headlessAdminUser.getUserAccountByEmailAddress(
-				'demo.unprivileged@liferay.com'
-			);
+			await apiHelpers.headlessAdminUser.postUserAccount({
+				alternateName: userAlternateName});
 
 		await apiHelpers.headlessAdminUser.assignUserToRole(role.name, user.id);
 
 		await page.getByLabel('Test Test User Profile').click();
 		await page.getByRole('menuitem', {name: 'Sign Out'}).click();
 
-		await performLogin(page, user.alternateName);
+		await performLogin(page, userAlternateName);
 
 		await viewObjectEntriesPage.goto(rootObjectDefinition.id);
 
@@ -717,12 +721,5 @@ test.describe('Manage bound object entries with update root permission', () => {
 		await expect(
 			page.getByText(boundObjectEntryText, {exact: true})
 		).toBeVisible();
-
-		// Clean up
-
-		await apiHelpers.headlessAdminUser.deleteRoleUserAccountAssociation(
-			role.id,
-			user.id
-		);
 	});
 });

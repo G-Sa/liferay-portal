@@ -38,12 +38,15 @@ const userData = {
 
 async function performLogin(
 	page: Page,
-	screenName: LoginScreenName
+	screenName: LoginScreenName,
+	redirectToHome?: boolean
 ): Promise<Cookie[]> {
 	const {name, password, surname} = userData[screenName];
 
-	await page.goto('/');
-
+	if (redirectToHome ?? true) {
+		await page.goto('/');
+	}
+	
 	await page.getByRole('button', {name: 'Sign In'}).click();
 
 	await page.getByLabel('Email Address').fill(`${screenName}@liferay.com`);
